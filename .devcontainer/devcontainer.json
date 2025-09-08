@@ -1,0 +1,15 @@
+{
+  "name": "Python 3.11 + uv (on mcr image)",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11-bookworm",
+  "customizations": {
+    "vscode": {
+      "extensions": ["ms-python.python", "ms-python.vscode-pylance", "ms-toolsai.jupyter"],
+      "settings": {
+        "python.defaultInterpreterPath": ".venv/bin/python",
+        "python.terminal.activateEnvironment": true
+      }
+    }
+  },
+  "mounts": ["source=uv-cache,target=/root/.cache/uv,type=volume"],
+  "onCreateCommand": "bash -lc 'set -eux; curl -LsSf https://astral.sh/uv/install.sh | sh; export PATH=$HOME/.local/bin:$PATH; if [ -f pyproject.toml ]; then uv venv && uv sync --dev; elif [ -f requirements.txt ]; then uv venv && uv pip install -r requirements.txt; fi'"
+}
