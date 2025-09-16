@@ -16,10 +16,10 @@ class StabilityApiGenerator:
     def __stability_request(self, prompt, negative_prompt):
         prompt = [
             generation.Prompt(
-                text=prompt, parameters=generation.PromptParameters(weight=1)),
+                text=prompt, parameters=generation.PromptParameters(weight=1)), # pyright: ignore[reportCallIssue]
             generation.Prompt(
-                text=negative_prompt,
-                parameters=generation.PromptParameters(weight=-1))
+                text=negative_prompt, # pyright: ignore[reportCallIssue]
+                parameters=generation.PromptParameters(weight=-1)) # pyright: ignore[reportCallIssue]
         ]
         return self.stability_api.generate(
             prompt=prompt,

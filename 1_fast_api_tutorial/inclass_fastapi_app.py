@@ -28,14 +28,14 @@ def get_square(num: int):
 
 
 @app.post("/class")
-async def root(request: Request):
+async def root_class(request: Request):
     json = await request.json()
     name = json['name']
     return {f"hello {name}"}
 
 
 @app.get("/item")
-async def root(image_request: ImageRequest):
+async def root_item(image_request: ImageRequest):
     prompt = image_request.prompt
     return {f"hello {prompt}"}
 
