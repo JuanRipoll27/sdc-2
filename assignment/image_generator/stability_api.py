@@ -30,6 +30,11 @@ class StabilityApiGenerator:
             samples=1,
             sampler=generation.SAMPLER_K_DPMPP_2M)
 
+
+    # Generate image and return raw bytes.
+    # in order to return it via FastAPI, you need to use
+    # image_binary = image_generator.generate_image("A fantasy landscape, trending on artstation")
+    # return Response(content=image_binary, media_type="image/png")
     def generate_image(self, prompt, negative_prompt):
         answers = self.__stability_request(prompt, negative_prompt)
 
