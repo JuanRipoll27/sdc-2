@@ -14,12 +14,12 @@ app = FastAPI()
 
 @app.get("/")
 def root():
-    return {"hello class"}
+    return {"message": "hello class"}
 
 
 @app.get("/hello/{name}")
 def root_hello(name: str):
-    return {f"hello {name}"}
+    return {"message": f"hello {name}"}
 
 
 @app.get("/square/{num}")
@@ -31,13 +31,12 @@ def get_square(num: int):
 async def root_class(request: Request):
     json = await request.json()
     name = json['name']
-    return {f"hello {name}"}
+    return {"message": f"hello {name}"}
 
 
 @app.get("/item")
-async def root_item(image_request: ImageRequest):
-    prompt = image_request.prompt
-    return {f"hello {prompt}"}
+async def root_item(prompt: str):
+    return {"message": f"hello {prompt}"}
 
 
 def say_hello(name: str):
@@ -48,7 +47,7 @@ def say_hello(name: str):
 async def root(image_request: ImageRequest, background_tasks: BackgroundTasks):
     prompt = image_request.prompt
     background_tasks.add_task(say_hello, prompt)
-    return {f"Grüß Di {prompt}"}
+    return {"message": f"Grüß Di {prompt}"}
 
 
 # Function to be run as a background task.

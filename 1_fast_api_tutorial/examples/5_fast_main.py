@@ -7,9 +7,9 @@ from pydantic import BaseModel
 
 class Item(BaseModel):
     name: str
-    description: str = None
+    description: str | None = None
     price: float
-    tax: float = None
+    tax: float | None = None
 
 
 app = FastAPI()
@@ -21,7 +21,7 @@ df = pd.DataFrame(columns=["name", "description", "price", "tax"])
 ## endpoint to add items to the df
 @app.post("/items/")
 async def create_item(item: Item):
-    df.loc[len(df)] = pd.Series(item.dict())
+    df.loc[len(df)] = pd.Series(item.model_dump())
     return {"item": item}
 
 
@@ -29,8 +29,8 @@ async def create_item(item: Item):
 @app.get("/items/")
 def get_items(name: str=None):
     if name:
-        return df[df["name"] == name]
-    return df
+        return df[df["name"] == name].to_dict(orient="records")
+    return df.to_dict(orient="records")
 
 
 ## get items with path params, search by name

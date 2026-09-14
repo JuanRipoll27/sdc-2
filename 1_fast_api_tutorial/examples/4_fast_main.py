@@ -1,6 +1,7 @@
 
 from fastapi import FastAPI
 import uvicorn
+import pandas as pd
 
 app = FastAPI()
 
@@ -23,7 +24,7 @@ def read_item(skip: int = 0, limit: int = 10):
     # random df with 100 entries
     # return based on skip and limit
     df = pd.DataFrame({"entries": range(100)})
-    return df.iloc[skip:skip+limit]
+    return df.iloc[skip:skip+limit].to_dict(orient="records")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
