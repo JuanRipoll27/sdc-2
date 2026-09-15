@@ -1,8 +1,9 @@
-from typing import Optional
-
 from fastapi import FastAPI, BackgroundTasks
-from fastapi.requests import Request
 from pydantic import BaseModel
+
+
+class ClassRequest(BaseModel):
+    name: str
 
 
 class ImageRequest(BaseModel):
@@ -28,10 +29,8 @@ def get_square(num: int):
 
 
 @app.post("/class")
-async def root_class(request: Request):
-    json = await request.json()
-    name = json['name']
-    return {"message": f"hello {name}"}
+async def root_class(request: ClassRequest):
+    return {"message": f"hello {request.name}"}
 
 
 @app.get("/item")
@@ -83,4 +82,3 @@ async def example_endpoint(background_tasks: BackgroundTasks):
 # TODO: Implement error handling for various possible failure scenarios
 
 # OPTIONAL: Implement any necessary profanity checking or validation for the user prompts
-
