@@ -1,8 +1,104 @@
 import os
+import uuid
+from pathlib import Path
+
+from dotenv import load_dotenv
 from fastapi import FastAPI, BackgroundTasks
+from pydantic import BaseModel, Field
+from fastapi import FastAPI, BackgroundTasks, HTTPException
+from fastapi.responses import FileResponse
+
 from image_generator import ImageGenerator
 
 app = FastAPI()
+
+load_dotenv()
+
+stability_key = os.getenv("STABILITY_KEY")
+
+if not stability_key:
+    raise RuntimeError("STABILITY_KEY is missing from .env")
+
+image_generator = ImageGenerator(stability_key)
+
+images = {}
+
+generated_dir = Path("generated_images")
+generated_dir.mkdir(exist_ok=True)
+
+class ImageRequest(BaseModel):
+    prompt: str = Field(min_length=1)
+
+def gen_image_task(image_id: str, prompt: str):
+    try:
+        image_bytes = image_generator.generate_image(prompt)
+
+        if image_bytes is None:
+            raise RuntimeError("Image generation returned no image")
+
+        image_path = generated_dir / f"{image_id}.png"
+
+        with open(image_path, "wb") as file:
+            file.write(image_bytes)
+
+        images[image_id]["status"] = "ready"
+        images[image_id]["path"] = str(image_path)
+
+    except Exception as error:
+        print("IMAGE GENERATION ERROR:", error)
+
+        images[image_id]["status"] = "failed"
+        images[image_id]["error"] = str(error)
+            
+
+@app.post("/images")
+async def create_image(
+    request: ImageRequest,
+    background_tasks: BackgroundTasks
+):
+    image_id = str(uuid.uuid4())
+
+    images[image_id] = {
+        "status": "processing",
+        "path": None
+    }
+
+    background_tasks.add_task(
+        gen_image_task,
+        image_id,
+        request.prompt
+    )
+
+    return {
+        "image_id": image_id,
+        "status": "processing"
+    }
+
+@app.get("/image/{image_id}")
+async def get_image(image_id: str):
+    if image_id not in images:
+        raise HTTPException(status_code=404, detail="Image not found")
+
+    image_info = images[image_id]
+
+    if image_info["status"] == "processing":
+        return {
+            "image_id": image_id,
+            "status": "processing"
+        }
+
+    if image_info["status"] == "failed":
+        return {
+            "image_id": image_id,
+            "status": "failed",
+            "error": image_info.get("error")
+        }
+
+    if image_info["status"] == "ready":
+        return FileResponse(
+            image_info["path"],
+            media_type="image/png"
+        )
 
 # Function to be run as a background task.
 # This is just a placeholder function for demonstration.
