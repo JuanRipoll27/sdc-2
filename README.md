@@ -46,6 +46,7 @@ Open [Swagger UI](http://127.0.0.1:8000/docs) to test it:
 2. Copy the returned `image_id`.
 3. Call **GET /image/{image_id}** with that ID (without quotes).
 4. If the response is `processing`, try again after a short wait. When ready, the endpoint returns the generated PNG image.
+5. Call **GET /images** to list all stored requests, including their prompts, statuses, and metadata.
 
 For setup details, examples, request validation, response states, and persistence, see the **[assignment README](assignment/README.md)**.
 
