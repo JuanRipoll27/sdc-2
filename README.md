@@ -1,49 +1,86 @@
-# FastAPI tutorial and assignment
+# FastAPI Tutorial and Image Generation Assignment
 
-Use Python 3.11 or newer and `uv`. The tutorial and assignment are separate
-projects, each with its own `pyproject.toml`, `uv.lock`, and `.venv`.
+Repository for the **Solution Deployment & Communication** course at **FH Technikum Wien**.
 
-## Run the tutorial
+It contains the FastAPI tutorial materials and a completed assignment implementing a text-to-image REST API using FastAPI and Stability AI (Stable Diffusion).
+
+## Repository structure
+
+- `0_uv_tutorial/` — introductory materials for `uv`
+- `1_fast_api_tutorial/` — FastAPI examples and exercises
+- `assignment/` — image generation API implementation and documentation
+- `tests/` — automated regression tests
+
+The tutorial and assignment are separate Python projects with their own `pyproject.toml`, `uv.lock` and virtual environment.
+
+**Requirements:** Python 3.11+ and [uv](https://docs.astral.sh/uv/).
+
+## Run the image generation assignment
 
 From the repository root:
 
-```sh
+```powershell
+cd assignment
+uv sync --locked
+```
+
+Create an `assignment/.env` file containing your own Stability AI API key:
+
+```dotenv
+STABILITY_KEY=your-stability-key
+OPENAI_API_KEY=
+PROFANITY_PROMPT_FILE=./profanity_prompt.txt
+```
+
+The OpenAI profanity filter is optional. Leave `OPENAI_API_KEY` empty to disable it.
+
+Start the API:
+
+```powershell
+uv run --locked uvicorn app:app --reload
+```
+
+Open [Swagger UI](http://127.0.0.1:8000/docs) to test it:
+
+1. Send a valid prompt to **POST /images**.
+2. Copy the returned `image_id`.
+3. Call **GET /image/{image_id}** with that ID (without quotes).
+4. If the response is `processing`, try again after a short wait. When ready, the endpoint returns the generated PNG image.
+
+For setup details, examples, request validation, response states, and persistence, see the **[assignment README](assignment/README.md)**.
+
+## Run the FastAPI tutorial
+
+From the repository root:
+
+```powershell
 cd 1_fast_api_tutorial
 uv sync --locked
 uv run --locked uvicorn inclass_fastapi_app:app --reload
 ```
 
-Open [the interactive API docs](http://127.0.0.1:8000/docs). For example, send
-`{"name": "Ada"}` to `POST /class`. Stop the server with Ctrl+C.
+Open [Swagger UI](http://127.0.0.1:8000/docs). For example, send `{"name": "Ada"}` to `POST /class`.
 
-To work through the notebook, run `uv run --locked jupyter notebook` from the
-same directory and open `fastApi_tutorial.ipynb`.
+To explore the notebook, run `uv run --locked jupyter notebook` from the tutorial directory.
 
-## Run the assignment
+**Note:** Stop one server with Ctrl+C before starting the other; both use port 8000 by default.
 
-After stopping the tutorial server, run from the repository root:
+## Run automated tests
 
-```sh
-cd assignment
-uv sync --locked
-uv run --locked uvicorn app:app --reload
-```
+From either `assignment/` or `1_fast_api_tutorial/`:
 
-Open [the interactive API docs](http://127.0.0.1:8000/docs) and follow the tasks in
-[the assignment README](assignment/README.md). The image-generation endpoints
-are intentionally left as exercises.
-
-## Run the checks
-
-From either `1_fast_api_tutorial` or `assignment`, run:
-
-```sh
+```powershell
 uv run --locked python -m unittest discover -s ../tests -v
 ```
 
+The tests include offline checks using mocked external responses. An end-to-end image generation check with a valid Stability AI key is a separate manual test.
+
+## Security and local files
+
+Do not commit real API keys, generated images, or local environments.
+
+The assignment reads its credentials from `assignment/.env`; this file is ignored by Git. The generated PNG files and the local JSON metadata database are also ignored.
+
 ## Dev container
 
-Open the repository in its dev container to install both locked environments
-automatically. The default Python interpreter is
-`1_fast_api_tutorial/.venv/bin/python`; select `assignment/.venv/bin/python` when
-working on the assignment.
+The repository includes a dev container that installs both locked environments. The default interpreter is `1_fast_api_tutorial/.venv/bin/python`; select `assignment/.venv/bin/python` for the assignment.
