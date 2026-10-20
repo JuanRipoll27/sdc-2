@@ -9,7 +9,8 @@ The implementation focuses on integrating an external ML service with request va
 ## Main features
 
 - `POST /images` to submit a text prompt for image generation
-- `GET /image/{image_id}` to check the request status or retrieve the PNG
+- `GET /images` to list all requests and their metadata
+- `GET /image/{image_id}` to check a request status or retrieve its PNG
 - FastAPI `BackgroundTasks` so the POST can return without waiting for generation
 - Pydantic input validation (at least two words and three characters)
 - UUID identifiers for individual requests
@@ -28,6 +29,7 @@ The implementation focuses on integrating an external ML service with request va
 5. The background task sends a formatted prompt to Stability AI using the configured Stable Diffusion XL model.
 6. If generation succeeds, it writes `generated_images/<image_id>.png` and marks the record `ready`. If it fails, it records `failed` and the error message.
 7. The client calls `GET /image/{image_id}`. While processing, it receives JSON; when ready, it receives the PNG.
+8. The client can call `GET /images` to inspect all recorded requests, statuses, and metadata.
 
 FastAPI BackgroundTasks runs work in the API process, **not** in a separate durable task queue. For this coursework, this avoids additional infrastructure.
 
@@ -88,6 +90,7 @@ The API can be demonstrated without a custom client script:
 4. Expand **GET /image/{image_id}**. Paste the returned ID **without quotation marks** and click **Execute**.
 5. If the response is JSON containing `"status": "processing"`, wait and execute the GET again.
 6. When generation finishes, the GET response contains the generated **PNG image** (`image/png`). You can open the URL or download the returned image from Swagger.
+7. Expand **GET /images** and execute it to list your requests, prompts, statuses, and links to completed images.
 
 The model implementation appends a sketch-style prompt template to the user's text, so generated pictures are intentionally styled like detailed drawings.
 
@@ -104,11 +107,40 @@ The model implementation appends a sketch-style prompt template to the user's te
 
 The ID is illustrative; each request generates a new UUID. The URL is for both **status checking** and **image retrieval**.
 
+### List requests and metadata
+
+The new **GET /images** endpoint returns all the requests stored in the local metadata database, including completed, processing, and failed requests. It does not launch new generations.
+
+Example response (illustrative):
+
+```json
+{
+  "total": 1,
+  "images": [
+    {
+      "image_id": "6c0874fe-2655-4b97-8395-e7110abaad16",
+      "prompt": "A Viennese tram in front of Schönbrunn Palace in winter",
+      "status": "ready",
+      "image_url": "http://127.0.0.1:8000/image/6c0874fe-2655-4b97-8395-e7110abaad16",
+      "status_url": "http://127.0.0.1:8000/image/6c0874fe-2655-4b97-8395-e7110abaad16",
+      "created_at": "2026-10-20T12:00:00",
+      "error": null
+    }
+  ]
+}
+```
+
+- `total` counts **all** stored requests, not only successful generations.
+- `image_url` is present only when the stored status is `ready`; otherwise it is `null`.
+- `status_url` is always present.
+- The endpoint lists metadata; it does **not** return every PNG as a gallery or serve the `generated_images/` directory.
+
 ## API reference
 
 | Method | Endpoint | Behavior |
 | --- | --- | --- |
 | `POST` | `/images` | Validate the prompt, queue generation, return UUID and status URL |
+| `GET` | `/images` | Return all stored requests and their metadata |
 | `GET` | `/image/{image_id}` | Return status JSON or the generated PNG |
 | `GET` | `/example` | Tutorial endpoint that schedules a simple background log entry |
 | `GET` | `/docs` | Interactive Swagger UI |
@@ -170,7 +202,7 @@ generated_images/
 
 The dates and ID above are illustrative. Records are loaded again when the app restarts. Generated images and metadata are local runtime files and are ignored by Git.
 
-The directory `generated_images/` is **not** served as a public static URL. Use `GET /image/{image_id}` to access an individual generated image. The current committed API does not expose a `GET /generated_images` route.
+The directory `generated_images/` is **not** served as a public static URL. Use `GET /images` for the request list and `GET /image/{image_id}` for a specific image or its status. There is no `GET /generated_images` route.
 
 ## External service and failure handling
 
@@ -188,9 +220,9 @@ From `assignment/`, run:
 uv run --locked python -m unittest discover -s ../tests -v
 ```
 
-The repository test suite includes FastAPI regression checks and **mocked** OpenAI responses for the GPT service. These automated tests do not prove that Stability AI accepts your real key or successfully returns an image.
+The test suite includes FastAPI tutorial/regression checks and **mocked** OpenAI responses for the GPT service. The assignment app is imported by the existing tests, so a local `assignment/.env` with `STABILITY_KEY` must be configured. The existing automated tests do **not** cover the entire POST → image generation → GET workflow and do not prove that Stability AI accepts your real key.
 
-For end-to-end validation, complete the Swagger demo above and confirm that the resulting response is a PNG file. Also try an invalid one-word prompt (`422`) and an unknown image ID (`404`).
+For end-to-end validation, complete the Swagger demo above and confirm that the resulting response is a PNG file. Then check `GET /images` for a `ready` entry with the corresponding `image_id`. Also try an invalid one-word prompt (`422`) and an unknown image ID (`404`).
 
 ## Design choices
 
