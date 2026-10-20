@@ -126,7 +126,29 @@ async def create_image(
         "status_url": image_endpoint,
         "image_url": image_endpoint
     }
+@app.get("/images")
+async def list_images(request: Request):
+    base_url = str(request.base_url).rstrip("/")
 
+    return {
+        "total": len(images),
+        "images": [
+            {
+                "image_id": image_id,
+                "prompt": info.get("prompt"),
+                "status": info.get("status"),
+                "image_url": (
+                    f"{base_url}/image/{image_id}"
+                    if info.get("status") == "ready"
+                    else None
+                ),
+                "status_url": f"{base_url}/image/{image_id}",
+                "created_at": info.get("created_at"),
+                "error": info.get("error")
+            }
+            for image_id, info in images.items()
+        ]
+    }
 
 @app.get("/image/{image_id}")
 async def get_image(image_id: str):
